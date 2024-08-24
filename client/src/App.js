@@ -142,9 +142,28 @@ function App() {
       <input type="text" placeholder="New owner address" onChange={(e) => setNewOwnerAddress(e.target.value)} />
       <button onClick={() => handleTransferOwnership(selectedProductId, newOwnerAddress)}>Transfer Ownership</button>
     
-
+      <ShoppingList />
     </div>
+
+    
+
   );
 }
+
+class ShoppingList extends React.Component {
+  render() {
+    return (
+      <div className="shopping-list">
+        <h1>Lista della spesa per {this.props.name}</h1>
+        <ul>
+          <li>Instagram</li>
+          <li>WhatsApp</li>
+          <li>Oculus</li>
+        </ul>
+      </div>
+    );
+  }
+}
+
 
 export default App;

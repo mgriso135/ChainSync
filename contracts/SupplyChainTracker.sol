@@ -1,3 +1,5 @@
+// Last modified by Matteo Griso on 08/08/2024
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -60,16 +62,24 @@ contract SupplyChainTracker {
         productCount++;
     }
 
-    function transferOwnership(uint256 _productId, address _newOwner, string memory _newLocation) public {
-        require(msg.sender == products[_productId].currentOwner, "Only the current owner can transfer ownership");
 
-        products[_productId].currentOwner = _newOwner;
-        products[_productId].currentLocation = _newLocation;
+// Next update: generate an ESCROW contract
+function transferOwnership(uint256 _productId, address _newOwner, string memory _newLocation, uint256 _transferFee) public payable {
+    require(msg.sender == products[_productId].currentOwner, "Only the current owner can transfer ownership");
+    require(msg.value >= _transferFee, "Insufficient payment");
 
-        uint eventId = generateEventId();
-        ownershipEvents[eventId] = OwnershipEvent(_newOwner, _newLocation, block.timestamp);
-        products[_productId].ownershipEventIds.push(eventId);
-    }
+    products[_productId].currentOwner = _newOwner;
+    products[_productId].currentLocation = _newLocation;
+
+    // Assuming transferFee is a constant defined elsewhere
+    (bool sent, ) = payable(products[_productId].currentOwner).call{value: msg.value}("");
+    require(sent, "Failed to send Ether");
+
+    uint eventId = generateEventId();
+    ownershipEvents[eventId] = OwnershipEvent(_newOwner, _newLocation, block.timestamp);
+    products[_productId].ownershipEventIds.push(eventId);
+}
+
 
     // Funzione per generare un ID evento univoco
     uint private eventIdCounter;

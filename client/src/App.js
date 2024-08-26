@@ -1,16 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
 
+function AccountConnected({ account }) {
+  return (
+    <div>
+      <h1>Supply Chain Tracker</h1>
+      <p>Account connected: {account}</p>
+    </div>
+  );
+}
+
 function App() {
   const [account, setAccount] = useState('');
   const [products, setProducts] = useState([]);
   const [contract, setContract] = useState(null);
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [newOwnerAddress, setNewOwnerAddress] = useState('');
+  const [price, setPrice] = useState('');
 
   useEffect(() => {
     const connectWallet = async () => {
       if (window.ethereum) {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        setAccount(accounts[0]);
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          setAccount(accounts[0]);
+        } catch (error) {
+          console.error('Error connecting to wallet:', error);
+        }
       }
     };
 
@@ -22,11 +38,8 @@ function App() {
       try {
         const response = await fetch('/SupplyChainTracker.json');
         const data = await response.json();
-        const abi = data.abi;
-        const contractAddress = data.networks.development.address; // Replace with correct network
-
         const web3 = new Web3(window.ethereum);
-        const contractInstance = new web3.eth.Contract(abi, contractAddress);
+        const contractInstance = new web3.eth.Contract(data.abi, data.networks.development.address);
         setContract(contractInstance);
       } catch (error) {
         console.error('Error fetching contract data:', error);
@@ -39,56 +52,53 @@ function App() {
   const getProducts = async () => {
     try {
       const productCount = await contract.methods.productCount().call();
-      const products = [];
-
-      for (let i = 0; i < productCount; i++) {
-        const product = await contract.methods.products(i).call();
-        products.push(product);
-      }
-
-      setProducts(products);
-      console.log(products);
+      const fetchedProducts = await Promise.all(
+        Array.from({ length: productCount }, (_, i) => contract.methods.products(i).call())
+      );
+      setProducts(fetchedProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
     }
   };
 
-  const addProduct = async (productName, productSerialNumber, productCurrentLocation, isForSale, initialPrice) => {
+  const addProduct = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const productName = form.productName.value;
+    const productSerialNumber = form.productSerialNumber.value;
+    const productCurrentLocation = form.productCurrentLocation.value;
+    const isForSale = form.isForSale.value === 'true';
+    const initialPrice = Web3.utils.toWei(form.initialPrice.value, 'ether');
+
     try {
-      var boolisForSale = false;
-      if(isForSale =="true")
-        { boolisForSale = true; }
-      const manufacturerAddress = Web3.utils.toChecksumAddress(account);
-      console.log(account + " " + productName + " " + productSerialNumber + " from " + account + "\n" 
-        + isForSale + " " + initialPrice);
-      await contract.methods.addProduct(productName, manufacturerAddress, productSerialNumber, manufacturerAddress, productCurrentLocation, initialPrice, boolisForSale).send({ from: account, gasPrice: '20000000000' });
+      await contract.methods.addProduct(
+        productName,
+        account,
+        productSerialNumber,
+        account,
+        productCurrentLocation,
+        initialPrice,
+        isForSale
+      ).send({ from: account, gasPrice: '20000000000' });
       console.log('Product added successfully');
+      getProducts(); // Refresh the product list
     } catch (error) {
       console.error('Error adding product:', error);
     }
   };
 
-  const handleAddProduct = (e) => {
-    e.preventDefault();
-    //const productManufacturer = e.target.productManufacturer.value;
-    const productName = e.target.productName.value;
-    const productSerialNumber = e.target.productSerialNumber.value;
-    const productCurrentLocation = e.target.productCurrentLocation.value;
-    const isForSale = e.target.isForSale.value;
-    const initialPrice = e.target.initialPrice.value;
-    addProduct(productName, productSerialNumber, productCurrentLocation, isForSale, initialPrice);
-  };
-
-  const [selectedProductId, setSelectedProductId] = useState(null);
-  const [newOwnerAddress, setNewOwnerAddress] = useState('');
-  const [price, setPrice] = useState('');
-
   const handleTransferOwnership = async () => {
-    console.log(selectedProductId + " " + newOwnerAddress + " " + price);
+    if (!selectedProductId || !newOwnerAddress || !price) {
+      console.error('Please fill all fields for transfer');
+      return;
+    }
+
     try {
-      await contract.methods.transferOwnership(selectedProductId, newOwnerAddress).send({ from: account, value: price });
-      // Update product ownership in local state (optional)
+      const priceInWei = Web3.utils.toWei(price, 'ether');
+      await contract.methods.transferOwnership(selectedProductId, newOwnerAddress)
+        .send({ from: account, value: priceInWei });
       console.log('Ownership transferred successfully');
+      getProducts(); // Refresh the product list
     } catch (error) {
       console.error('Error transferring ownership:', error);
     }
@@ -96,13 +106,9 @@ function App() {
 
   return (
     <div>
-      <h1>Supply Chain Tracker</h1>
-      <p>Account: {account}</p>
+      <AccountConnected account={account} />
       
-      <form onSubmit={handleAddProduct}>
-      <label htmlFor="productManufacturer">Manufacturer:</label>
-        <input type="text" id="productManufacturer" name="productManufacturer" required />
-        <br />
+      <form onSubmit={addProduct}>
         <label htmlFor="productName">Product Name:</label>
         <input type="text" id="productName" name="productName" required />
         <br />
@@ -113,57 +119,53 @@ function App() {
         <input type="text" id="productCurrentLocation" name="productCurrentLocation" required />
         <br />
         <label htmlFor="isForSale">For sale:</label>
-        <select id="isForSale">
+        <select id="isForSale" name="isForSale">
           <option value="true">True</option>
           <option value="false">False</option>
         </select>
         <br />
-        <label htmlFor="initialPrice">Initial price:</label>
-        <input type="number" id="initialPrice" name="initialPrice" required />ETH
+        <label htmlFor="initialPrice">Initial price (ETH):</label>
+        <input type="number" id="initialPrice" name="initialPrice" step="0.01" required />
         <br />
         <button type="submit">Add Product</button>
       </form>
-      <p></p>
+
       <button onClick={getProducts}>Get Products</button>
       <ul>
         {products.map((product, index) => (
-          <li key={index}>ID: {product.id.toString(10)} - Product: {product.name} - Manufacturer: {product.manufacturer} - 
-          Serial number: {product.serialNumber} - currentOwner: {product.currentOwner} - currentLocation: {product.currentLocation} - Price: {product.price + " ETH"} - isForSale: {product.isForSale + "   "}</li>
+          <li key={index}>
+            ID: {product.id} - Product: {product.name} - Manufacturer: {product.manufacturer} - 
+            Serial number: {product.serialNumber} - Current Owner: {product.currentOwner} - 
+            Current Location: {product.currentLocation} - Price: {Web3.utils.fromWei(product.price, 'ether')} ETH - 
+            For Sale: {product.isForSale.toString()}
+          </li>
         ))}
       </ul>
 
-      <select onChange={(e) => setSelectedProductId(e.target.value)}>
-        <option value="">Select product</option>
-        {products.map((product, index) => (
-          <option key={index} value={product.id}>{product.name}</option>
-        ))}
-      </select>
-      <input type="number" placeholder="Price" onChange={(e) => setPrice(e.target.value)}  />
-      <input type="text" placeholder="New owner address" onChange={(e) => setNewOwnerAddress(e.target.value)} />
-      <button onClick={() => handleTransferOwnership(selectedProductId, newOwnerAddress)}>Transfer Ownership</button>
-    
-      <ShoppingList />
+      <div>
+        <select value={selectedProductId} onChange={(e) => setSelectedProductId(e.target.value)}>
+          <option value="">Select product</option>
+          {products.map((product, index) => (
+            <option key={index} value={product.id}>{product.name}</option>
+          ))}
+        </select>
+        <input 
+          type="number" 
+          placeholder="Price (ETH)" 
+          step="0.01"
+          value={price} 
+          onChange={(e) => setPrice(e.target.value)}
+        />
+        <input 
+          type="text" 
+          placeholder="New owner address" 
+          value={newOwnerAddress} 
+          onChange={(e) => setNewOwnerAddress(e.target.value)} 
+        />
+        <button onClick={handleTransferOwnership}>Transfer Ownership</button>
+      </div>
     </div>
-
-    
-
   );
 }
-
-class ShoppingList extends React.Component {
-  render() {
-    return (
-      <div className="shopping-list">
-        <h1>Lista della spesa per {this.props.name}</h1>
-        <ul>
-          <li>Instagram</li>
-          <li>WhatsApp</li>
-          <li>Oculus</li>
-        </ul>
-      </div>
-    );
-  }
-}
-
 
 export default App;

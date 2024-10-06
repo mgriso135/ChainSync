@@ -49,12 +49,32 @@ function App() {
     fetchContractData();
   }, []);
 
-  const getProducts = async () => {
+  /*const getProducts = async () => {
     try {
       const productCount = await contract.methods.productCount().call();
+      console.log(productCount);
       const fetchedProducts = await Promise.all(
         Array.from({ length: productCount }, (_, i) => contract.methods.products(i).call())
       );
+
+      setProducts(fetchedProducts);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };*/
+
+  const getProducts = async () => {
+    try {
+      const productCount = await contract.methods.productCount().call();
+      console.log('Product Count:', productCount.toString());
+      
+      const fetchedProducts = [];
+      for (let i = 0; i < Number(productCount); i++) {
+        const product = await contract.methods.products(i).call();
+        console.log(product.manufacturer);
+        fetchedProducts.push(product);
+      }
+
       setProducts(fetchedProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -69,6 +89,8 @@ function App() {
     const productCurrentLocation = form.productCurrentLocation.value;
     const isForSale = form.isForSale.value === 'true';
     const initialPrice = Web3.utils.toWei(form.initialPrice.value, 'ether');
+
+console.log(initialPrice);
 
     try {
       await contract.methods.addProduct(
@@ -134,10 +156,14 @@ function App() {
       <ul>
         {products.map((product, index) => (
           <li key={index}>
-            ID: {product.id} - Product: {product.name} - Manufacturer: {product.manufacturer} - 
-            Serial number: {product.serialNumber} - Current Owner: {product.currentOwner} - 
-            Current Location: {product.currentLocation} - Price: {Web3.utils.fromWei(product.price, 'ether')} ETH - 
-            For Sale: {product.isForSale.toString()}
+            Manufacturer: {product.manufacturer} - 
+            ID: {product.id} -
+            Product: {product.name} - 
+            Serial number: {product.serialNumber} - 
+            Current Owner: {product.currentOwner} - 
+            Current Location: {product.currentLocation} - 
+            Price: {product.price} ETH - 
+            For Sale: {product.isForSale}
           </li>
         ))}
       </ul>

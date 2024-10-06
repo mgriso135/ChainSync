@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
+import { ethers } from 'ethers'; 
 
 function AccountConnected({ account }) {
   return (
@@ -49,6 +50,26 @@ function App() {
     fetchContractData();
   }, []);
 
+
+// Assuming you have a provider connected to the Ethereum network
+const provider = new ethers.providers.Web3Provider(window.ethereum);
+
+
+  const getGasPrice = async () => {
+  try {
+    const gasPrice = await provider.getGasPrice();
+    console.log('Gas Price (Wei):', gasPrice.toString()); // Output gas price in Wei
+
+    // Convert to Gwei for readability
+    const gasPriceInGwei = ethers.utils.formatUnits(gasPrice, 'gwei'); 
+    console.log('Gas Price (Gwei):', gasPriceInGwei); 
+
+    return gasPrice;
+  } catch (error) {
+    console.error('Error fetching gas price:', error);
+  }
+};
+
   /*const getProducts = async () => {
     try {
       const productCount = await contract.methods.productCount().call();
@@ -90,9 +111,18 @@ function App() {
     const isForSale = form.isForSale.value === 'true';
     const initialPrice = Web3.utils.toWei(form.initialPrice.value, 'ether');
 
-console.log(initialPrice);
+    console.log(initialPrice);
+
+    if (!productName || !productSerialNumber) {
+      alert('Please enter a product name and serial number.');
+      return;
+    }
 
     try {
+      const estimatedGasPrice = await getGasPrice(); // Get the gas price
+      const gasPriceString = estimatedGasPrice.toString(); // Convert to string
+      console.log(estimatedGasPrice);
+
       await contract.methods.addProduct(
         productName,
         account,
@@ -101,11 +131,12 @@ console.log(initialPrice);
         productCurrentLocation,
         initialPrice,
         isForSale
-      ).send({ from: account, gasPrice: '20000000000' });
+      ).send({ from: account, gasPrice: gasPriceString });
       console.log('Product added successfully');
       getProducts(); // Refresh the product list
     } catch (error) {
       console.error('Error adding product:', error);
+      alert('An error occurred while adding the product.');
     }
   };
 
@@ -162,8 +193,8 @@ console.log(initialPrice);
             Serial number: {product.serialNumber} - 
             Current Owner: {product.currentOwner} - 
             Current Location: {product.currentLocation} - 
-            Price: {product.price} ETH - 
-            For Sale: {product.isForSale}
+            Price: {Web3.utils.fromWei(product.price, 'ether')} ETH -
+            For Sale: {product.isForSale.toString()}
           </li>
         ))}
       </ul>

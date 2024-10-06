@@ -22,6 +22,8 @@ contract SupplyChainTracker {
         address currentOwner;
         string currentLocation;
         uint256 timestamp;
+        uint256 price;
+        bool isForSale;
         uint[] ownershipEventIds;
         uint[] sensorEventIds;
     }
@@ -43,7 +45,9 @@ contract SupplyChainTracker {
         address _manufacturer,
         string memory _serialNumber,
         address _initialOwner,
-        string memory _initialLocation
+        string memory _initialLocation,
+        uint256 _price,
+        bool _isForSale
     ) public {
         require(msg.sender == _manufacturer, "Only manufacturer can add products");
 
@@ -56,7 +60,9 @@ contract SupplyChainTracker {
             currentLocation: _initialLocation,
             timestamp: block.timestamp,
             ownershipEventIds: new uint[](0),
-            sensorEventIds: new uint[](0)
+            sensorEventIds: new uint[](0),
+            price: _price,
+            isForSale: _isForSale
         });
 
         productCount++;
@@ -64,10 +70,12 @@ contract SupplyChainTracker {
 
 
 // Next update: generate an ESCROW contract
-function transferOwnership(uint256 _productId, address _newOwner, string memory _newLocation, uint256 _transferFee) public payable {
+function transferOwnership(uint256 _productId, address _newOwner, string memory _newLocation) public payable {
     require(msg.sender == products[_productId].currentOwner, "Only the current owner can transfer ownership");
-    require(msg.value >= _transferFee, "Insufficient payment");
+    require(msg.value >= products[_productId].price, "Insufficient payment");
 
+    // Update product price
+    products[_productId].price = msg.value;
     products[_productId].currentOwner = _newOwner;
     products[_productId].currentLocation = _newLocation;
 

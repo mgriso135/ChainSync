@@ -162,8 +162,10 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
   const handleBuyProduct = async (productId, price) => {
     try {
       const priceInWei = Web3.utils.toWei(price, 'ether');
+      console.log("productId: " +typeof(productId)+" "+ productId.toString());
+      console.log("account: " + account.toString());
   
-      await contract.methods.transferOwnership(productId, account, "Buyer's Location") // Update location as needed
+      await contract.methods.transferOwnership(productId, account, "A") // Update location as needed
         .send({ from: account, value: priceInWei });
   
       console.log('Product purchased successfully');
@@ -204,7 +206,7 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
         {products.map((product, index) => (
           <li key={index}>
             Manufacturer: {product.manufacturer} - 
-            ID: {product.id} -
+            ID: {product.id.toString()} -
             Product: {product.name} - 
             Serial number: {product.serialNumber} - 
             Current Owner: {product.currentOwner} - 

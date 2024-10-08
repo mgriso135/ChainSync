@@ -69,23 +69,31 @@ contract SupplyChainTracker {
     }
 
 
-// Next update: generate an ESCROW contract
 function transferOwnership(uint256 _productId, address _newOwner, string memory _newLocation) public payable {
-    require(msg.sender == products[_productId].currentOwner, "Only the current owner can transfer ownership");
-    require(msg.value >= products[_productId].price, "Insufficient payment");
+    // 1. Check if the product exists
+    require(_productId < productCount, "Product ID does not exist."); 
 
-    // Assuming transferFee is a constant defined elsewhere
-    bool sent = payable(products[_productId].currentOwner).send(msg.value);
-    require(sent, "Failed to send Ether");
+    // 2. Check if the sender is the current owner
+    require(msg.sender != products[_productId].currentOwner, "Current owner can't buy a from product from himself");
 
-    // Update product price
+    // 3. Check if the product is actually for sale 
+    require(products[_productId].isForSale, "This product is not currently for sale.");
+
+    // 4. Check if the sent value meets or exceeds the product's price
+    require(msg.value >= products[_productId].price, "Insufficient payment.");
+
+    // Update product state (if all checks pass)
     // products[_productId].price = msg.value;
     products[_productId].currentOwner = _newOwner;
     products[_productId].currentLocation = _newLocation;
 
-/*    uint eventId = generateEventId();
-    ownershipEvents[eventId] = OwnershipEvent(_newOwner, _newLocation, block.timestamp);
-    products[_productId].ownershipEventIds.push(eventId);*/
+    // Transfer Ether to the previous owner
+    payable(products[_productId].currentOwner).transfer(msg.value); 
+
+    // Log the ownership transfer event 
+    // uint eventId = generateEventId();
+    // ownershipEvents[eventId] = OwnershipEvent(_newOwner, _newLocation, block.timestamp);
+    // products[_productId].ownershipEventIds.push(eventId);
 }
 
 

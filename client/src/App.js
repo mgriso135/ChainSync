@@ -142,7 +142,7 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
     }
   };
 
-  const handleTransferOwnership = async () => {
+/*  const handleTransferOwnership = async () => {
     if (!selectedProductId || !newOwnerAddress || !price) {
       console.error('Please fill all fields for transfer');
       return;
@@ -157,7 +157,7 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
     } catch (error) {
       console.error('Error transferring ownership:', error);
     }
-  };
+  };*/
 
   const handleBuyProduct = async (productId, price) => {
     try {
@@ -200,7 +200,7 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
         <br />
         <button type="submit">Add Product</button>
       </form>
-
+<p></p>
       <button onClick={getProducts}>Get Products</button>
       <ul>
         {products.map((product, index) => (
@@ -222,28 +222,7 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
         ))}
       </ul>
 
-      <div>
-        <select value={selectedProductId} onChange={(e) => setSelectedProductId(e.target.value)}>
-          <option value="">Select product</option>
-          {products.map((product, index) => (
-            <option key={index} value={product.id}>{product.name}</option>
-          ))}
-        </select>
-        <input 
-          type="number" 
-          placeholder="Price (ETH)" 
-          step="0.01"
-          value={price} 
-          onChange={(e) => setPrice(e.target.value)}
-        />
-        <input 
-          type="text" 
-          placeholder="New owner address" 
-          value={newOwnerAddress} 
-          onChange={(e) => setNewOwnerAddress(e.target.value)} 
-        />
-        <button onClick={handleTransferOwnership}>Transfer Ownership</button>
-      </div>
+      
     </div>
   );
 }

@@ -74,18 +74,18 @@ function transferOwnership(uint256 _productId, address _newOwner, string memory 
     require(msg.sender == products[_productId].currentOwner, "Only the current owner can transfer ownership");
     require(msg.value >= products[_productId].price, "Insufficient payment");
 
+    // Assuming transferFee is a constant defined elsewhere
+    bool sent = payable(products[_productId].currentOwner).send(msg.value);
+    require(sent, "Failed to send Ether");
+
     // Update product price
-    products[_productId].price = msg.value;
+    // products[_productId].price = msg.value;
     products[_productId].currentOwner = _newOwner;
     products[_productId].currentLocation = _newLocation;
 
-    // Assuming transferFee is a constant defined elsewhere
-    (bool sent, ) = payable(products[_productId].currentOwner).call{value: msg.value}("");
-    require(sent, "Failed to send Ether");
-
-    uint eventId = generateEventId();
+/*    uint eventId = generateEventId();
     ownershipEvents[eventId] = OwnershipEvent(_newOwner, _newLocation, block.timestamp);
-    products[_productId].ownershipEventIds.push(eventId);
+    products[_productId].ownershipEventIds.push(eventId);*/
 }
 
 

@@ -31,8 +31,10 @@ function App() {
       }
     };
 
-    connectWallet();
-  }, []);
+    if (!account) { // Only connect if the account is not already set
+      connectWallet();
+    }
+  }, [account]);
 
   useEffect(() => {
     const fetchContractData = async () => {
@@ -157,6 +159,20 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
     }
   };
 
+  const handleBuyProduct = async (productId, price) => {
+    try {
+      const priceInWei = Web3.utils.toWei(price, 'ether');
+  
+      await contract.methods.transferOwnership(productId, account, "Buyer's Location") // Update location as needed
+        .send({ from: account, value: priceInWei });
+  
+      console.log('Product purchased successfully');
+      getProducts(); // Refresh the product list
+    } catch (error) {
+      console.error('Error purchasing product:', error);
+    }
+  };
+
   return (
     <div>
       <AccountConnected account={account} />
@@ -195,6 +211,11 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
             Current Location: {product.currentLocation} - 
             Price: {Web3.utils.fromWei(product.price, 'ether')} ETH -
             For Sale: {product.isForSale.toString()}
+            {product.isForSale && product.currentOwner.toString().toLowerCase() != account && (
+              <button onClick={() => handleBuyProduct(product.id, Web3.utils.fromWei(product.price, 'ether'))}>
+                Buy
+            </button>
+            )}
           </li>
         ))}
       </ul>

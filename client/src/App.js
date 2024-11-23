@@ -72,19 +72,6 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
   }
 };
 
-  /*const getProducts = async () => {
-    try {
-      const productCount = await contract.methods.productCount().call();
-      console.log(productCount);
-      const fetchedProducts = await Promise.all(
-        Array.from({ length: productCount }, (_, i) => contract.methods.products(i).call())
-      );
-
-      setProducts(fetchedProducts);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    }
-  };*/
 
   const getProducts = async () => {
     try {
@@ -142,22 +129,6 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
     }
   };
 
-/*  const handleTransferOwnership = async () => {
-    if (!selectedProductId || !newOwnerAddress || !price) {
-      console.error('Please fill all fields for transfer');
-      return;
-    }
-
-    try {
-      const priceInWei = Web3.utils.toWei(price, 'ether');
-      await contract.methods.transferOwnership(selectedProductId, newOwnerAddress)
-        .send({ from: account, value: priceInWei });
-      console.log('Ownership transferred successfully');
-      getProducts(); // Refresh the product list
-    } catch (error) {
-      console.error('Error transferring ownership:', error);
-    }
-  };*/
 
   const handleBuyProduct = async (productId, price) => {
     try {
@@ -165,7 +136,7 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
       console.log("productId: " +typeof(productId)+" "+ productId.toString());
       console.log("account: " + account.toString());
   
-      await contract.methods.transferOwnership(productId, account, "A") // Update location as needed
+      await contract.methods.transferOwnership(productId, account, "New location " + productId) // Update location as needed
         .send({ from: account, value: priceInWei });
   
       console.log('Product purchased successfully');
@@ -204,7 +175,7 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
       <button onClick={getProducts}>Get Products</button>
       <ul>
         {products.map((product, index) => (
-          <li key={index}>
+          <div key={index}>
             Manufacturer: {product.manufacturer} - 
             ID: {product.id.toString()} -
             Product: {product.name} - 
@@ -218,7 +189,16 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
                 Buy
             </button>
             )}
-          </li>
+            <h2>Ownership History:</h2>
+    <ul>
+      {product.ownershipHistory.map((event, eventIndex) => (
+        <li key={eventIndex}>
+          Transferred to: {event.newOwner} on {new Date(event.timestamp * 1000).toLocaleString()} - 
+          Location: {event.newLocation} 
+        </li>
+      ))}
+    </ul>
+          </div>
         ))}
       </ul>
 

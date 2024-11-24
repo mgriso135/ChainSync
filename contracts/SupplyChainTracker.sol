@@ -2,8 +2,10 @@
 
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+// import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract SupplyChainTracker {
+
+contract SupplyChainTracker /*is Ownable*/ {
 
     address public owner;
     uint256 public productCount;
@@ -17,15 +19,15 @@ contract SupplyChainTracker {
         productCount = 0;
     }
 
-    function transferContractOwnership(address newOwner) public onlyOwner {
+/*    function transferContractOwnership(address newOwner) public onlyOwner {
         owner = newOwner;
-    }
+    }*/
 
     // This function allows me (the owner of the contract, to withdraw funds)
-    function withdrawFunds() public onlyOwner {
-    uint balance = address(this).balance;
-    payable(owner).transfer(balance);
-}
+/*    function withdrawFunds() public onlyOwner {
+        uint balance = address(this).balance;
+        payable(owner).transfer(balance);
+}*/
 
     struct Product {
         uint256 id;
@@ -53,7 +55,7 @@ contract SupplyChainTracker {
         string location; // Esempio di dato sensoriale
     }
 
-    function addProduct(
+    function addProduct (
         string memory _name,
         address _manufacturer,
         string memory _serialNumber,
@@ -61,7 +63,7 @@ contract SupplyChainTracker {
         string memory _initialLocation,
         uint256 _price,
         bool _isForSale
-    ) public {
+    ) public payable {
         require(msg.sender == _manufacturer, "Only manufacturer can add products");
         require(msg.value >= (_price * 10) / 100, "Insufficient fee");
 
@@ -88,16 +90,16 @@ contract SupplyChainTracker {
     products[_productId].currentLocation = _newLocation; 
   }
 
-  function updatePrice(uint256 _productId, uint256 memory _newPrice) public {
+  function updatePrice(uint256 _productId, uint256 _newPrice) public {
     require(_productId < productCount, "Product ID does not exist."); 
     require(msg.sender == products[_productId].currentOwner, "Only the current owner can update the price."); 
     products[_productId].price = _newPrice;
   }
 
-    function updateIsForSale(uint256 _productId, bool memory _isForSale) public {
+    function updateIsForSale(uint256 _productId, bool _isForSale) public {
     require(_productId < productCount, "Product ID does not exist."); 
     require(msg.sender == products[_productId].currentOwner, "Only the current owner can update the isForSale flag."); 
-    products[_productId].isForSale = _isForSale 
+    products[_productId].isForSale = _isForSale; 
   }
 
 function transferOwnership(uint256 _productId, address _newOwner, string memory _newLocation) public payable {

@@ -18,6 +18,9 @@ function App() {
   const [selectedProductId, setSelectedProductId] = useState('');
   const [newOwnerAddress, setNewOwnerAddress] = useState('');
   const [price, setPrice] = useState('');
+  
+  // Needed to edit a single product
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
     const connectWallet = async () => {
@@ -120,7 +123,7 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
         productCurrentLocation,
         initialPrice,
         isForSale
-      ).send({ from: account, gasPrice: gasPriceString });
+      ).send({ from: account, gasPrice: gasPriceString, value: initialPrice * 0.1 });
       console.log('Product added successfully');
       getProducts(); // Refresh the product list
     } catch (error) {
@@ -144,6 +147,10 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
     } catch (error) {
       console.error('Error purchasing product:', error);
     }
+  };
+
+  const handleProductClick = (product) => {
+    setSelectedProduct(product);
   };
 
   return (
@@ -173,11 +180,13 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
       </form>
 <p></p>
       <button onClick={getProducts}>Get Products</button>
-      <ul>
+      <ol>
         {products.map((product, index) => (
           <div key={index}>
             Manufacturer: {product.manufacturer} - 
+            <span onClick={() => handleProductClick(product)}>
             ID: {product.id.toString()} -
+            </span>
             Product: {product.name} - 
             Serial number: {product.serialNumber} - 
             Current Owner: {product.currentOwner} - 
@@ -191,18 +200,31 @@ const provider = new ethers.providers.Web3Provider(window.ethereum);
             )}
             <h2>Ownership History:</h2>
     <ul>
-      {product.ownershipHistory.map((event, eventIndex) => (
+      {product?.ownershipHistory?.length > 0 ? (
+      product.ownershipHistory.map((event, eventIndex) => (
         <li key={eventIndex}>
           Transferred to: {event.newOwner} on {new Date(event.timestamp * 1000).toLocaleString()} - 
           Location: {event.newLocation} 
         </li>
-      ))}
+      ))): (
+        <li>No ownership history available</li>
+      )}
     </ul>
           </div>
         ))}
-      </ul>
+      </ol>
 
       
+      {selectedProduct && (
+  <div>
+    <h2>Selected Product Details</h2>
+    {/* Display details of selectedProduct here */}
+    <p>ID: {selectedProduct.id.toString()}<br />
+    Name: {selectedProduct.name}</p>
+    {/* ... other details ... */}
+  </div>
+)}
+
     </div>
   );
 }

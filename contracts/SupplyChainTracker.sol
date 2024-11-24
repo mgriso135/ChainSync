@@ -17,9 +17,15 @@ contract SupplyChainTracker {
         productCount = 0;
     }
 
-    function transferOwnership(address newOwner) public onlyOwner {
+    function transferContractOwnership(address newOwner) public onlyOwner {
         owner = newOwner;
     }
+
+    // This function allows me (the owner of the contract, to withdraw funds)
+    function withdrawFunds() public onlyOwner {
+    uint balance = address(this).balance;
+    payable(owner).transfer(balance);
+}
 
     struct Product {
         uint256 id;
@@ -76,12 +82,23 @@ contract SupplyChainTracker {
         productCount++;
     }
 
-// This function allows me (the owner of the contract, to withdraw funds)
-    function withdrawFunds() public onlyOwner {
-    uint balance = address(this).balance;
-    payable(owner).transfer(balance);
-}
+  function updateLocation(uint256 _productId, string memory _newLocation) public {
+    require(_productId < productCount, "Product ID does not exist."); 
+    require(msg.sender == products[_productId].currentOwner, "Only the current owner can update the location."); 
+    products[_productId].currentLocation = _newLocation; 
+  }
 
+  function updatePrice(uint256 _productId, uint256 memory _newPrice) public {
+    require(_productId < productCount, "Product ID does not exist."); 
+    require(msg.sender == products[_productId].currentOwner, "Only the current owner can update the price."); 
+    products[_productId].price = _newPrice;
+  }
+
+    function updateIsForSale(uint256 _productId, bool memory _isForSale) public {
+    require(_productId < productCount, "Product ID does not exist."); 
+    require(msg.sender == products[_productId].currentOwner, "Only the current owner can update the isForSale flag."); 
+    products[_productId].isForSale = _isForSale 
+  }
 
 function transferOwnership(uint256 _productId, address _newOwner, string memory _newLocation) public payable {
     // 1. Check if the product exists

@@ -51,8 +51,10 @@ contract SupplyChainTracker /*is Ownable*/ {
 
     struct SensorData {
         uint timestamp;
-        uint temperature; // Esempio di dato sensoriale
-        string location; // Esempio di dato sensoriale
+        string paramName;
+        string paramValue_str;
+        uint paramValue_num;
+        string location;
     }
 
     function addProduct (
@@ -161,11 +163,11 @@ function transferOwnership(uint256 _productId, address _newOwner, string memory 
     }
 
     // Funzione per registrare i dati dei sensori
-    function recordSensorData(uint _productId, uint _temperature, string memory _location) public {
+    function recordSensorData(uint _productId, string memory _pName, string memory _spValue, uint _snValue, string memory _location) public {
         require(msg.sender == products[_productId].currentOwner, "Only the current owner can record sensor data");
 
         uint eventId = generateEventId();
-        sensorData[eventId] = SensorData(block.timestamp, _temperature, _location);
+        sensorData[eventId] = SensorData(block.timestamp, _pName, _spValue, _snValue, _location);
         products[_productId].sensorEventIds.push(eventId);
     }
 

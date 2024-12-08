@@ -1,2 +1,7 @@
 Run compile_and_run.sh script
 At the end, follow the instructions.
+
+Contract has been deployed to Sepolia Testnet, here: https://sepolia.etherscan.io/address/0x9060487b235e08874a6c2cd23efa1a904ebbb4bc
+Contract address: 0x9060487b235E08874a6C2cd23EFa1a904EBBB4Bc
+
+To deploy it to Testnet I used Remix IDE
